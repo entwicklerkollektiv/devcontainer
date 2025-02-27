@@ -1,0 +1,67 @@
+version: "3"
+
+vars:
+  DOCKER_IMAGE: entwicklerkollektiv/devcontainer
+  DOCKER_TAG: latest
+
+tasks:
+  default:
+    cmds:
+      - task --list-all
+
+  build:
+    desc: Build the Docker image (current platform)
+    cmds:
+      - >
+        docker buildx build
+        --load
+        -t {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}
+        .
+    env:
+      BUILDKIT_PROGRESS: plain
+
+  build-builder:
+    desc: Build the Docker image (current platform)
+    cmds:
+      - >
+        docker buildx build
+        --load
+        --target builder
+        -t {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}-builder
+        .
+    env:
+      BUILDKIT_PROGRESS: plain
+
+  build-all:
+    desc: Build the Docker image (all platforms)
+    cmds:
+      - docker buildx create --use --name="devcontainer-builder"
+      - >
+        docker buildx build
+        --platform linux/amd64,linux/arm64
+        --load
+        -t {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}
+        .
+      - defer: docker buildx rm "devcontainer-builder"
+
+  clean-cache:
+    desc: Löscht den Docker Build Cache
+    cmds:
+      - docker buildx prune -a -f
+
+  run:
+    desc: Run the Docker container
+    deps: [build]
+    cmds:
+      - docker run -it --rm {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}
+
+  run-builder:
+    desc: Run the Docker builder container
+    deps: [build-builder]
+    cmds:
+      - docker run -it --rm {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}-builder
+
+  clean:
+    desc: Remove the Docker image
+    cmds:
+      - docker rmi {{.DOCKER_IMAGE}}:{{.DOCKER_TAG}}2

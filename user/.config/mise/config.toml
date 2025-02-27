@@ -1,0 +1,10 @@
+[tools]
+node = "22"
+neovim = "latest"
+starship = "latest"
+lazygit = "latest"
+chezmoi = "latest"
+teleport-community = "latest"
+delta = "latest"
+task = "latest"
+
